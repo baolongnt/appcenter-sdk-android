@@ -729,6 +729,7 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void resumeDistributeWorkflow() {
         AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "Actually resume distribute workflow...");
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
@@ -928,6 +929,12 @@ public class Distribute extends AbstractAppCenterService {
                 DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
+        } else {
+            boolean packageExists = mPackageInfo != null;
+            boolean activityHas = mForegroundActivity != null;
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "Dont check updates. packageInfo exists: " + packageExists + ", mForegroundActivity exists: "
+                    + activityHas + ", mWorkflowCompleted not completed: " + !mWorkflowCompleted
+                    + ", isInstanceEnabled:" + isInstanceEnabled());
         }
     }
 

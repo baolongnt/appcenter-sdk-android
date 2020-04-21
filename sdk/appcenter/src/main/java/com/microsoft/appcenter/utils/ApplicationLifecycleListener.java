@@ -98,28 +98,37 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     }
 
     private void dispatchPauseIfNeeded() {
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener dispatchPauseIfNeeded");
         if (mResumedCounter == 0) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener dispatchPauseIfNeeded, mPauseSent set true");
             mPauseSent = true;
         }
     }
 
     private void dispatchStopIfNeeded() {
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener dispatchStopIfNeeded");
         if (mStartedCounter == 0 && mPauseSent) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener dispatchStopIfNeeded onApplicationEnterBackground");
             for (ApplicationLifecycleCallbacks service : mLifecycleCallbacks) {
                 service.onApplicationEnterBackground();
             }
             mStopSent = true;
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener dispatchPauseIfNeeded, mStopSent set false");
         }
     }
 
     @Override
     public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityCreated");
     }
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
         mStartedCounter++;
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityStarted, mStartedCounter=" +
+                mStartedCounter + ", mStopSent=" + mStopSent);
         if (mStartedCounter == 1 && mStopSent) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityStarted service.onApplicationEnterForeground called");
             for (ApplicationLifecycleCallbacks service : mLifecycleCallbacks) {
                 service.onApplicationEnterForeground();
             }
@@ -130,10 +139,14 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
         mResumedCounter++;
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityResumed, mResumedCounter=" +
+                mResumedCounter);
         if (mResumedCounter == 1) {
             if (mPauseSent) {
+                AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityResumed, mPauseSent set to false");
                 mPauseSent = false;
             } else {
+                AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityResumed, removeCallbacks");
                 mHandler.removeCallbacks(mDelayedPauseRunnable);
             }
         }
@@ -148,9 +161,11 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
          */
         if (mStartedCounter == 0 && mStopSent) {
             mStopSent = false;
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityPaused, mStopSent set false");
         }
         if (mResumedCounter == 0 && mPauseSent) {
             mPauseSent = false;
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityPaused, mPauseSent set false");
         }
         mResumedCounter = max(mResumedCounter - 1, 0);
         if (mResumedCounter == 0) {
@@ -161,6 +176,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
              * ApplicationLifecycleListener won't send any events if activities are destroyed
              * and recreated due to a configuration change.
              */
+            AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityPaused, postDelayed");
             mHandler.postDelayed(mDelayedPauseRunnable, TIMEOUT_MS);
         }
     }
@@ -168,6 +184,8 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     @Override
     public void onActivityStopped(@NonNull Activity activity) {
         mStartedCounter = max(mStartedCounter - 1, 0);
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityStopped, mStartedCounter=" +
+                mStartedCounter + ", mStopSent=" + mStopSent);
         dispatchStopIfNeeded();
     }
 
@@ -177,6 +195,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
+        AppCenterLog.debug(AppCenterLog.LOG_TAG_SPECIAL, "LifecycleListener onActivityDestroyed");
     }
 
     public interface ApplicationLifecycleCallbacks {

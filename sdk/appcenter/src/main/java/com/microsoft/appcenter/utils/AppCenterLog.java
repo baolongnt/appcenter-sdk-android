@@ -26,6 +26,7 @@ public class AppCenterLog {
      * Log tag prefix that the SDK uses for all logs.
      */
     public static final String LOG_TAG = "AppCenter";
+    public static final String LOG_TAG_SPECIAL = "AC12345";
 
     /**
      * Log level to disable all logs, even assert logs.
