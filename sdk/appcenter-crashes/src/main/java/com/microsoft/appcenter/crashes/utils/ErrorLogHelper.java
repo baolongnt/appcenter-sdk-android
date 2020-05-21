@@ -13,7 +13,6 @@ import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -26,7 +25,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
@@ -167,13 +165,18 @@ public class ErrorLogHelper {
         errorLog.setProcessId(Process.myPid());
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (activityManager != null) {
-            List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
-            if (runningAppProcesses != null) {
-                for (ActivityManager.RunningAppProcessInfo info : runningAppProcesses) {
-                    if (info.pid == Process.myPid()) {
-                        errorLog.setProcessName(info.processName);
+            try {
+                List<ActivityManager.RunningAppProcessInfo> runningAppProcesses =
+                    activityManager.getRunningAppProcesses();
+                if (runningAppProcesses != null) {
+                    for (ActivityManager.RunningAppProcessInfo info : runningAppProcesses) {
+                        if (info.pid == Process.myPid()) {
+                            errorLog.setProcessName(info.processName);
+                        }
                     }
                 }
+            } catch (RuntimeException e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Unable to fetch process name", e);
             }
         }
 

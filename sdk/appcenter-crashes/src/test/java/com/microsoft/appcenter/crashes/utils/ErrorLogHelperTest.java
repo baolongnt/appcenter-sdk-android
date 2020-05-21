@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
+import android.os.RemoteException;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -256,6 +257,53 @@ public class ErrorLogHelperTest {
         ActivityManager activityManager = mock(ActivityManager.class);
         when(activityManager.getRunningAppProcesses()).thenReturn(null);
         when(mockContext.getSystemService(Context.ACTIVITY_SERVICE)).thenReturn(activityManager);
+
+        /* Mock architecture. */
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
+        TestUtils.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
+
+        /* Test. */
+        long launchTimeStamp = 2000;
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
+        assertNotNull(errorLog);
+        assertNotNull(errorLog.getId());
+        assertEquals(logTimestamp, errorLog.getTimestamp());
+        assertNull(errorLog.getDevice());
+        assertEquals(Integer.valueOf(123), errorLog.getProcessId());
+        assertEquals("", errorLog.getProcessName());
+        assertNull(errorLog.getParentProcessId());
+        assertNull(errorLog.getParentProcessName());
+        assertEquals("armeabi-v7a", errorLog.getArchitecture());
+        assertEquals((Long) java.lang.Thread.currentThread().getId(), errorLog.getErrorThreadId());
+        assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
+        assertEquals(Boolean.TRUE, errorLog.getFatal());
+        assertEquals(launchTimeStamp, errorLog.getAppLaunchTimestamp().getTime());
+    }
+
+    @Test
+    public void createErrorLogWithFailedDeviceGetAndActivityManagerException() throws java.lang.Exception {
+
+        /* Mock base. */
+        Context mockContext = mock(Context.class);
+        when(Process.myPid()).thenReturn(123);
+        Date logTimestamp = new Date(1000L);
+        whenNew(Date.class).withNoArguments().thenReturn(logTimestamp);
+        whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
+
+            @Override
+            public Date answer(InvocationOnMock invocation) {
+                return new Date((Long) invocation.getArguments()[0]);
+            }
+        });
+
+        /* Mock device. */
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+
+        /* Mock activity manager to return null active processes. */
+        ActivityManager activityManager = mock(ActivityManager.class);
+        when(activityManager.getRunningAppProcesses()).thenReturn(null);
+        when(mockContext.getSystemService(Context.ACTIVITY_SERVICE)).thenReturn(activityManager);
+        when(activityManager.getRunningAppProcesses()).thenThrow(new RuntimeException(new RemoteException()));
 
         /* Mock architecture. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
